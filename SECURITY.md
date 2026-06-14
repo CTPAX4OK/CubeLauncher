@@ -2,20 +2,15 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Currently, we are focusing on the initial release.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| 0.1.x   | :white_check_mark: |
+| < 0.1.x  | :x:                |
 
-## Reporting a Vulnerability
-
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+  ## Reporting a Vulnerability
+If you discover a security vulnerability in CubeLauncher, please do not create a public issue. Instead, please report it directly to me:
+Email: [info@cybernetpro.online]
+Discord: [ctpax4ok]
+Please provide a detailed description of the vulnerability, steps to reproduce it, and any potential impact. I will investigate and get back to you as soon as possible. Thank you for helping keep CubeLauncher secure!
