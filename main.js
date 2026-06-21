@@ -9,7 +9,7 @@ const pidusage = require('pidusage');
 const chokidar = require('chokidar');
 const isDev = require('electron-is-dev');
 const execPromise = util.promisify(exec);
-const activeServers = new Map(); // serverId -> { process, logBuffer }
+const activeServers = new Map();
 
 function sendLog(serverId, data) {
   const text = data.toString();
