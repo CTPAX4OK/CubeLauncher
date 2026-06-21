@@ -15,9 +15,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getJavaPath: () => ipcRenderer.invoke('config:getJavaPath'),
   setJavaPath: (execPath) => ipcRenderer.invoke('config:setJavaPath', execPath),
   startServer: (jarName) => ipcRenderer.invoke('server:start', jarName),
-  stopServer: () => ipcRenderer.invoke('server:stop'),
-  sendCommand: (cmd) => ipcRenderer.invoke('server:command', cmd),
-  getLogs: () => ipcRenderer.invoke('get-logs'),
+  stopServer: (serverId) => ipcRenderer.invoke('server:stop', serverId),
+  sendCommand: (serverId, cmd) => ipcRenderer.invoke('server:command', serverId, cmd),
+  getLogs: (serverId) => ipcRenderer.invoke('sys:getLogs', serverId),
   onServerLog: (callback) => {
     const handler = (_event, data) => callback(data);
     ipcRenderer.on('server-log', handler);
@@ -57,5 +57,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_event, data) => callback(data);
     ipcRenderer.on('download-complete', handler);
     return () => ipcRenderer.removeListener('download-complete', handler);
-  }
+  },
+  openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
+  getJavaVersion: () => ipcRenderer.invoke('sys:getJavaVersion'),
+  getAikarFlags: () => ipcRenderer.invoke('config:getAikarFlags'),
+  setAikarFlags: (val) => ipcRenderer.invoke('config:setAikarFlags', val),
+  onLocalFilesChanged: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('fs:localFilesChanged', handler);
+    return () => ipcRenderer.removeListener('fs:localFilesChanged', handler);
+  },
+  selectCustomJar: () => ipcRenderer.invoke('dialog:selectCustomJar'),
 });

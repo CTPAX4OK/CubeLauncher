@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Boxes, LayoutGrid, Store, FolderTree, Settings, Cpu, Loader2, FolderOpen, Play, Server, Terminal, Square, Check } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Boxes, LayoutGrid, Store, FolderTree, Settings, Cpu, Loader2, FolderOpen, Play, Server, Terminal, Square, Check, Heart } from "lucide-react"
 export type View = "dashboard" | "store" | "files" | "settings" | "console"
 const NAV: { id: View; label: string; icon: any; hint: string }[] = [
   { id: "dashboard", label: "Version Matrix", icon: LayoutGrid, hint: "Create servers" },
@@ -25,30 +26,43 @@ export function Sidebar({
   view: View
   onViewChange: (v: View) => void
 }) {
-  const { serverPath, downloads, selectFolder, startServer, stopServer } = useElectron()
+  const { serverPath, downloads, runningServers, selectFolder, startServer, stopServer, openExternal, getAikarFlags, setAikarFlags } = useElectron()
   const activeDownload = Object.values(downloads).find((d) => d.status === "downloading" || d.status === "finishing")
-  const activeServers = Object.values(downloads).filter((d) => d.status === "done" && d.id.startsWith("core-"))
+  const installedJars = Object.values(downloads).filter((d) => d.status === "done").map(d => d.fileName)
   const [selectedJar, setSelectedJar] = useState<string>("")
-  const [isRunning, setIsRunning] = useState(false)
+  const isRunning = runningServers.includes(selectedJar)
+  const [isStarting, setIsStarting] = useState(false)
+  const [aikarEnabled, setAikarEnabled] = useState(false)
+
   useEffect(() => {
-    if (activeServers.length > 0 && !selectedJar) {
-      setSelectedJar(activeServers[0].fileName)
+    if (getAikarFlags) {
+      getAikarFlags().then(setAikarEnabled)
     }
-  }, [activeServers, selectedJar])
-  const handleStart = async () => {
-    if (!selectedJar || !startServer) return
-    setIsRunning(true)
-    const success = await startServer(selectedJar)
-    if (success) {
-      onViewChange("console")
-    } else {
-      setIsRunning(false)
+  }, [getAikarFlags])
+
+  const toggleAikar = async (val: boolean) => {
+    if (setAikarFlags) {
+      await setAikarFlags(val)
+      setAikarEnabled(val)
     }
   }
+  useEffect(() => {
+    if (installedJars.length > 0 && !selectedJar) {
+      setSelectedJar(installedJars[0])
+    }
+  }, [installedJars, selectedJar])
+  const handleStart = async () => {
+    if (!selectedJar || !startServer) return
+    setIsStarting(true)
+    const serverId = await startServer(selectedJar)
+    if (serverId) {
+      onViewChange("console")
+    }
+    setIsStarting(false)
+  }
   const handleStop = async () => {
-    if (!stopServer) return
-    await stopServer()
-    setIsRunning(false)
+    if (!stopServer || !selectedJar) return
+    await stopServer(selectedJar)
   }
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
@@ -117,31 +131,27 @@ export function Sidebar({
             />
           </div>
         </div>
-      ) : activeServers.length > 0 ? (
+      ) : installedJars.length > 0 ? (
         <div className="m-3 rounded-xl border border-sidebar-border bg-card/60 p-4">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
               <Server className="size-3.5" /> Active Server
             </span>
           </div>
-          {activeServers.length > 1 ? (
-            <Select value={selectedJar} onValueChange={setSelectedJar}>
-              <SelectTrigger className="mt-2 h-7 w-full text-xs">
-                <SelectValue placeholder="Select jar..." />
-              </SelectTrigger>
-              <SelectContent>
-                {activeServers.map((s) => (
-                  <SelectItem key={s.fileName} value={s.fileName} className="text-xs">
-                    {s.fileName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <p className="mt-1.5 truncate text-xs font-semibold text-foreground" title={activeServers[0].fileName}>
-              {activeServers[0].fileName}
-            </p>
-          )}
+            <div className="flex-1 mt-3">
+              <Select value={selectedJar} onValueChange={setSelectedJar}>
+                <SelectTrigger className="h-8 w-full border-border bg-card text-xs hover:bg-accent/50 focus:ring-0">
+                  <SelectValue placeholder="Select Core" />
+                </SelectTrigger>
+                <SelectContent className="border-border bg-card/95 backdrop-blur-md">
+                  {installedJars.map((jar) => (
+                    <SelectItem key={jar} value={jar} className="text-xs hover:bg-accent focus:bg-accent">
+                      {jar}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           {isRunning ? (
             <button
               onClick={handleStop}
@@ -153,9 +163,14 @@ export function Sidebar({
           ) : (
             <button
               onClick={handleStart}
-              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              disabled={isStarting || activeDownload !== undefined || !selectedJar}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              <Play className="size-3.5" fill="currentColor" />
+              {isStarting ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Play className="size-3.5" fill="currentColor" />
+              )}
               Start Server
             </button>
           )}
@@ -177,8 +192,26 @@ export function Sidebar({
             <FolderOpen className="size-3.5" />
             Change Folder
           </button>
+
+          <div className="mt-4 flex items-center justify-between rounded-lg border border-border bg-black/20 p-2">
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium text-foreground">Aikar's Flags</span>
+              <span className="text-[9px] text-muted-foreground">Performance Boost</span>
+            </div>
+            <Switch checked={aikarEnabled} onCheckedChange={toggleAikar} />
+          </div>
         </div>
       ) : null}
+
+      <div className="px-3 pb-4">
+        <button
+          onClick={() => openExternal('https://donatello.to/CTPAX4OK')}
+          className="flex w-full items-center gap-2.5 rounded-lg border border-pink-500/20 bg-pink-500/5 px-3 py-2.5 text-sm font-medium text-pink-400 transition-all duration-300 hover:border-pink-500/40 hover:bg-pink-500/10 hover:shadow-[0_0_20px_-4px] hover:shadow-pink-500/30"
+        >
+          <Heart className="size-[18px]" />
+          <span>Support Author</span>
+        </button>
+      </div>
     </aside>
   )
 }

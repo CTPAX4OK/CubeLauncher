@@ -15,9 +15,10 @@ interface ElectronContextValue {
   isElectron: boolean
   serverPath: string | null
   initializing: boolean
+  runningServers: string[]
   selectFolder: () => Promise<void>
   selectFile: () => Promise<string | null>
-  downloadCore: (coreType: "paper" | "fabric", mcVersion: string) => Promise<{ success: boolean; filePath?: string; error?: string }>
+  downloadCore: (coreType: "paper" | "fabric" | "vanilla", mcVersion: string) => Promise<{ success: boolean; filePath?: string; error?: string }>
   downloads: Record<string, DownloadState>
   minimizeWindow: () => void
   maximizeWindow: () => void
@@ -27,14 +28,15 @@ interface ElectronContextValue {
   setSavedRam: (ramGb: number) => Promise<void>
   getJavaPath: () => Promise<string | null>
   setJavaPath: (execPath: string) => Promise<void>
-  startServer: (jarName: string) => Promise<boolean>
-  stopServer: () => Promise<boolean>
-  sendCommand: (cmd: string) => Promise<boolean>
-  getLogs: () => Promise<string[]>
-  onServerLog?: (callback: (data: string) => void) => () => void
+  startServer: (jarName: string) => Promise<string | null>
+  stopServer: (serverId: string) => Promise<boolean>
+  sendCommand: (serverId: string, cmd: string) => Promise<boolean>
+  getLogs: (serverId: string) => Promise<string[]>
+  onServerLog?: (callback: (data: { serverId: string, log: string }) => void) => () => void
   onJavaError?: (callback: (data: { detected: string, required: number }) => void) => () => void
   onJavaFallback?: (callback: (data: string) => void) => () => void
-  onServerStats?: (callback: (data: { activeServers: number, ramUsed: number, tps: string }) => void) => () => void
+  onServerStats?: (callback: (data: { activeServers: string[], cpu: string, ramUsed: number, tps: string, details?: Record<string, { cpu: number, ramUsed: number }> }) => void) => () => void
+  onLocalFilesChanged?: (callback: (files: string[]) => void) => () => void
   searchModrinth: (opts: any) => Promise<any>
   downloadPlugin: (projectId: string, coreType: string, mcVersion: string) => Promise<any>
   checkInstalled: (fileName: string, coreType: string) => Promise<boolean>
@@ -43,6 +45,11 @@ interface ElectronContextValue {
   saveFile: (filePath: string, content: string) => Promise<boolean>
   saveConfig: (data: any) => Promise<boolean>
   readConfig: () => Promise<any | null>
+  openExternal: (url: string) => void
+  getJavaVersion: () => Promise<string | null>
+  selectCustomJar: () => Promise<string | null>
+  getAikarFlags: () => Promise<boolean>
+  setAikarFlags: (val: boolean) => Promise<void>
 }
 const ElectronContext = createContext<ElectronContextValue | null>(null)
 export function ElectronProvider({ children }: { children: ReactNode }) {
@@ -51,6 +58,7 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
   const [serverPath, setServerPath] = useState<string | null>(null)
   const [initializing, setInitializing] = useState(true)
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({})
+  const [runningServers, setRunningServers] = useState<string[]>([])
   useEffect(() => {
     if (!api) {
       setInitializing(false)
@@ -105,6 +113,48 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
     }
   }, [api])
   useEffect(() => {
+    if (!api?.onLocalFilesChanged) return
+    const unsub = api.onLocalFilesChanged((files: string[]) => {
+      setDownloads(prev => {
+        const next = { ...prev }
+        let changed = false
+        for (const [id, d] of Object.entries(next)) {
+          if (d.status === "done" && !files.includes(d.fileName)) {
+            delete next[id]
+            changed = true
+          }
+        }
+        for (const file of files) {
+          const exists = Object.values(next).some(d => d.fileName === file)
+          if (!exists) {
+            let id = `custom-${file}`
+            if (file.startsWith('paper-')) {
+              const parts = file.split('-')
+              if (parts.length >= 2) id = `core-paper-${parts[1]}`
+            } else if (file.startsWith('fabric-server-mc.')) {
+              const match = file.match(/fabric-server-mc\.([^-]+)/)
+              if (match) id = `core-fabric-${match[1]}`
+            } else if (file.startsWith('server-') && file.endsWith('.jar')) {
+              const match = file.match(/server-([^.]+(?:\.[^.]+)*)\.jar/)
+              if (match) id = `core-vanilla-${match[1]}`
+            }
+            next[id] = { id, fileName: file, percent: 100, status: "done" }
+            changed = true
+          }
+        }
+        return changed ? next : prev
+      })
+    })
+    return () => unsub()
+  }, [api])
+  useEffect(() => {
+    if (!api?.onServerStats) return
+    const unsub = api.onServerStats((data: { activeServers: string[] }) => {
+      setRunningServers(data.activeServers)
+    })
+    return () => unsub()
+  }, [api])
+  useEffect(() => {
     if (!api) {
       setInitializing(false)
       return
@@ -131,6 +181,13 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
               if (id) {
                 initDownloads[id] = { id, fileName: file, percent: 100, status: "done" }
               }
+              if (!id && file.startsWith('server-') && file.endsWith('.jar')) {
+                const match = file.match(/server-([^.]+(?:\.[^.]+)*)\.jar/)
+                if (match) {
+                  const vid = `core-vanilla-${match[1]}`
+                  initDownloads[vid] = { id: vid, fileName: file, percent: 100, status: "done" }
+                }
+              }
             }
             if (Object.keys(initDownloads).length > 0) {
               setDownloads(prev => ({ ...prev, ...initDownloads }))
@@ -154,6 +211,13 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
                 }
                 if (id) {
                   initDownloads[id] = { id, fileName: file, percent: 100, status: "done" }
+                }
+                if (!id && file.startsWith('server-') && file.endsWith('.jar')) {
+                  const match = file.match(/server-([^.]+(?:\.[^.]+)*)\.jar/)
+                  if (match) {
+                    const vid = `core-vanilla-${match[1]}`
+                    initDownloads[vid] = { id: vid, fileName: file, percent: 100, status: "done" }
+                  }
                 }
               }
               if (Object.keys(initDownloads).length > 0) {
@@ -191,6 +255,13 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
           if (id) {
             newDownloads[id] = { id, fileName: file, percent: 100, status: "done" }
           }
+          if (!id && file.startsWith('server-') && file.endsWith('.jar')) {
+            const match = file.match(/server-([^.]+(?:\.[^.]+)*)\.jar/)
+            if (match) {
+              const vid = `core-vanilla-${match[1]}`
+              newDownloads[vid] = { id: vid, fileName: file, percent: 100, status: "done" }
+            }
+          }
         }
         setDownloads(newDownloads) 
       }
@@ -202,7 +273,7 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
     return await api.selectFile()
   }, [api])
   const downloadCore = useCallback(
-    async (coreType: "paper" | "fabric", mcVersion: string) => {
+    async (coreType: "paper" | "fabric" | "vanilla", mcVersion: string) => {
       if (!api) return { success: false, error: "Not running in Electron" }
       const id = `core-${coreType}-${mcVersion}`
       setDownloads((prev) => ({
@@ -233,11 +304,14 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
   const getSavedRam = useCallback(async () => (api?.getSavedRam ? await api.getSavedRam() : null), [api])
   const setSavedRam = useCallback(async (r: number) => (api?.setSavedRam ? await api.setSavedRam(r) : undefined), [api])
   const getJavaPath = useCallback(async () => (api?.getJavaPath ? await api.getJavaPath() : null), [api])
+  const getJavaVersion = useCallback(async () => (api?.getJavaVersion ? await api.getJavaVersion() : null), [api])
   const setJavaPath = useCallback(async (p: string) => (api?.setJavaPath ? await api.setJavaPath(p) : undefined), [api])
-  const startServer = useCallback(async (j: string) => (api?.startServer ? await api.startServer(j) : false), [api])
-  const stopServer = useCallback(async () => (api?.stopServer ? await api.stopServer() : false), [api])
-  const sendCommand = useCallback(async (c: string) => (api?.sendCommand ? await api.sendCommand(c) : false), [api])
-  const getLogs = useCallback(async () => (api?.getLogs ? await api.getLogs() : []), [api])
+  const getAikarFlags = useCallback(async () => (api?.getAikarFlags ? await api.getAikarFlags() : false), [api])
+  const setAikarFlags = useCallback(async (v: boolean) => (api?.setAikarFlags ? await api.setAikarFlags(v) : undefined), [api])
+  const startServer = useCallback(async (j: string) => (api?.startServer ? await api.startServer(j) : null), [api])
+  const stopServer = useCallback(async (s: string) => (api?.stopServer ? await api.stopServer(s) : false), [api])
+  const sendCommand = useCallback(async (s: string, c: string) => (api?.sendCommand ? await api.sendCommand(s, c) : false), [api])
+  const getLogs = useCallback(async (s: string) => (api?.getLogs ? await api.getLogs(s) : []), [api])
   const saveConfig = useCallback(async (data: any) => (api?.saveConfig ? await api.saveConfig(data) : false), [api])
   const readConfig = useCallback(async () => (api?.readConfig ? await api.readConfig() : null), [api])
   const checkInstalled = useCallback(async (fileName: string, coreType: string) => (api?.checkInstalled ? await api.checkInstalled(fileName, coreType) : false), [api])
@@ -247,12 +321,16 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
   const onJavaError = api?.onJavaError
   const onJavaFallback = api?.onJavaFallback
   const onServerStats = api?.onServerStats
+  const onLocalFilesChanged = api?.onLocalFilesChanged
+  const openExternal = useCallback((url: string) => api?.openExternal?.(url), [api])
+  const selectCustomJar = useCallback(async () => (api?.selectCustomJar ? await api.selectCustomJar() : null), [api])
   return (
     <ElectronContext.Provider
       value={{
         isElectron,
         serverPath,
         initializing,
+        runningServers,
         selectFolder,
         selectFile,
         downloadCore,
@@ -264,6 +342,7 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
         getSavedRam,
         setSavedRam,
         getJavaPath,
+        getJavaVersion,
         setJavaPath,
         startServer,
         stopServer,
@@ -281,6 +360,11 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
         searchModrinth,
         downloadPlugin,
         checkInstalled,
+        openExternal,
+        selectCustomJar,
+        onLocalFilesChanged,
+        getAikarFlags,
+        setAikarFlags,
       }}
     >
       {children}

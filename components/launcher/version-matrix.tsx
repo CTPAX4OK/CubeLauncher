@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { useElectron } from "@/lib/use-electron"
 import { CORES, VERSIONS, type CoreId } from "@/lib/launcher-data"
@@ -11,13 +11,20 @@ const CORE_ACCENT: Record<CoreId, string> = {
   forge: "text-chart-4",
   fabric: "text-chart-2",
 }
-const DOWNLOADABLE_CORES = new Set<CoreId>(["paper", "fabric"])
+const DOWNLOADABLE_CORES = new Set<CoreId>(["paper", "fabric", "vanilla"])
 export function VersionMatrix() {
   const [query, setQuery] = useState("")
   const rows = VERSIONS.filter((v) => v.version.includes(query.trim()))
-  const { downloadCore, downloads, isElectron, serverPath, onServerStats } = useElectron()
-  const [stats, setStats] = useState({
-    activeServers: 0,
+  const { downloadCore, downloads, isElectron, serverPath, onServerStats, getJavaVersion, selectCustomJar } = useElectron()
+  const [javaVersion, setJavaVersion] = useState<string | null>(null)
+  const [stats, setStats] = useState<{
+    activeServers: string[],
+    ramUsed: number | string,
+    tps: string,
+    cpu: string,
+    details?: Record<string, { cpu: number, ramUsed: number }>
+  }>({
+    activeServers: [],
     ramUsed: 0,
     tps: "0.0",
     cpu: "0.0"
@@ -29,6 +36,17 @@ export function VersionMatrix() {
     })
     return () => unsubscribe()
   }, [onServerStats])
+  useEffect(() => {
+    let mounted = true
+    if (getJavaVersion) {
+      getJavaVersion().then((v) => {
+        if (mounted) setJavaVersion(v)
+      })
+    }
+    return () => {
+      mounted = false
+    }
+  }, [getJavaVersion])
   const handleCreate = async (coreId: CoreId, mcVersion: string) => {
     if (!DOWNLOADABLE_CORES.has(coreId)) {
       return
@@ -41,22 +59,50 @@ export function VersionMatrix() {
       console.warn("No server directory configured")
       return
     }
-    await downloadCore(coreId as "paper" | "fabric", mcVersion)
+    await downloadCore(coreId as "paper" | "fabric" | "vanilla", mcVersion)
   }
+  const numActive = stats.activeServers?.length || 0
+
+  const { totalCpuStr, totalRamStr, cpuDetails, ramDetails } = useMemo(() => {
+    let cpuSum = 0
+    let ramSum = 0
+    const cDetails: { id: string; val: string }[] = []
+    const rDetails: { id: string; val: string }[] = []
+
+    if (stats.details) {
+      for (const [id, d] of Object.entries(stats.details)) {
+        cpuSum += d.cpu
+        ramSum += d.ramUsed
+        cDetails.push({ id, val: `${d.cpu.toFixed(1)}%` })
+        rDetails.push({ id, val: `${(d.ramUsed / 1024 / 1024 / 1024).toFixed(2)} GB` })
+      }
+    }
+    return {
+      totalCpuStr: cpuSum > 0 ? `${cpuSum.toFixed(1)}%` : "0.0%",
+      totalRamStr: ramSum > 0 ? `${(ramSum / 1024 / 1024 / 1024).toFixed(2)} GB` : "0.00 GB",
+      cpuDetails: cDetails,
+      ramDetails: rDetails,
+    }
+  }, [stats.details])
+
   const dynamicStats = [
-    { label: "CPU Usage", value: stats.activeServers > 0 ? `${stats.cpu}%` : "—", sub: stats.activeServers > 0 ? "Process load" : "Server off", icon: Activity },
-    { label: "Total RAM Used", value: stats.ramUsed > 0 ? `${stats.ramUsed} GB` : "—", sub: stats.ramUsed > 0 ? "Allocated to JVM" : "Not allocated", icon: HardDrive },
-    { label: "Avg. Tick Rate", value: stats.activeServers > 0 ? stats.tps : "—", sub: stats.activeServers > 0 ? "TPS (20.0 max)" : "No servers", icon: Server },
-    { label: "Java Runtime", value: "21", sub: "Temurin LTS", icon: Cpu },
+    { label: "CPU Usage", value: numActive > 0 ? totalCpuStr : "—", sub: numActive > 0 ? "Process load" : "Server off", icon: Activity, details: cpuDetails },
+    { label: "Total RAM Used", value: numActive > 0 ? totalRamStr : "—", sub: numActive > 0 ? "Allocated to JVM" : "Not allocated", icon: HardDrive, details: ramDetails },
+    { label: "Avg. Tick Rate", value: numActive > 0 ? stats.tps : "—", sub: numActive > 0 ? "TPS (20.0 max)" : "No servers", icon: Server },
+    { label: "Java Runtime", value: javaVersion ?? "—", sub: javaVersion ? "Detected" : "Checking...", icon: Cpu },
   ]
   return (
     <div className="flex flex-col gap-6">
       {}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {dynamicStats.map((s) => {
+        {dynamicStats.map((s, i) => {
           const Icon = s.icon
           return (
-            <div key={s.label} className="rounded-xl border border-border bg-card p-4 transition-colors">
+            <div
+              key={s.label}
+              className="animate-card-enter rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_-4px] hover:shadow-primary/20"
+              style={{ animationDelay: `${i * 75}ms` }}
+            >
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
                 <Icon className={cn("size-4", s.value !== "—" ? "text-primary" : "text-muted-foreground")} />
@@ -64,7 +110,16 @@ export function VersionMatrix() {
               <p className={cn("mt-2 font-heading text-2xl font-semibold tracking-tight", s.value !== "—" ? "text-primary" : "text-card-foreground")}>
                 {s.value}
               </p>
-              <p className="mt-1 text-[11px] text-muted-foreground">{s.sub}</p>
+              {s.details && s.details.length > 0 && numActive > 0 && (
+                <div className="mt-2 flex flex-col gap-0.5">
+                  {s.details.map((d) => (
+                    <div key={d.id} className="text-xs text-muted-foreground truncate">
+                      {d.id}: <span className="text-foreground font-medium">{d.val}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="mt-1 text-[11px] text-muted-foreground/70">{s.sub}</p>
             </div>
           )
         })}
@@ -73,7 +128,7 @@ export function VersionMatrix() {
       <div id="quick-create">
         <h2 className="mb-3 font-heading text-sm font-semibold text-foreground">Quick Create</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {CORES.map((core) => {
+          {CORES.map((core, i) => {
             const canDownload = DOWNLOADABLE_CORES.has(core.id)
             const dlKey = Object.keys(downloads).find(
               (k) => k.startsWith(`core-${core.id}-`) && downloads[k].status === "downloading"
@@ -88,9 +143,10 @@ export function VersionMatrix() {
                   if (latest) handleCreate(core.id, latest.version)
                 }}
                 className={cn(
-                  "group flex flex-col items-start rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/50 hover:bg-card/80",
-                  (!canDownload || isDownloading) && "opacity-60 cursor-not-allowed hover:border-border hover:bg-card"
+                  "animate-card-enter group flex flex-col items-start rounded-xl border border-border bg-card p-4 text-left transition-all duration-300 hover:border-primary/50 hover:bg-card/80 hover:shadow-[0_0_20px_-4px] hover:shadow-primary/20",
+                  (!canDownload || isDownloading) && "opacity-60 cursor-not-allowed hover:border-border hover:bg-card hover:shadow-none"
                 )}
+                style={{ animationDelay: `${300 + i * 75}ms` }}
               >
                 <div className="flex w-full items-center justify-between">
                   <span className={cn("flex size-9 items-center justify-center rounded-lg bg-secondary", CORE_ACCENT[core.id])}>
@@ -109,6 +165,21 @@ export function VersionMatrix() {
               </button>
             )
           })}
+          <button
+            onClick={() => selectCustomJar && selectCustomJar()}
+            className="animate-card-enter group flex flex-col items-start rounded-xl border border-dashed border-border bg-transparent p-4 text-left transition-all duration-300 hover:border-primary/50 hover:bg-card/40 hover:shadow-[0_0_20px_-4px] hover:shadow-primary/20"
+            style={{ animationDelay: `${300 + CORES.length * 75}ms` }}
+          >
+            <div className="flex w-full items-center justify-between">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors group-hover:text-primary group-hover:bg-primary/10">
+                <Plus className="size-4" />
+              </span>
+            </div>
+            <p className="mt-3 font-heading text-sm font-semibold text-card-foreground group-hover:text-primary transition-colors">Custom Core</p>
+            <p className="text-xs text-muted-foreground">
+              Select existing .jar
+            </p>
+          </button>
         </div>
       </div>
       {}

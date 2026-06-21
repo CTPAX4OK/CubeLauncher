@@ -169,11 +169,29 @@ async function getModrinthDownload(projectId, coreType, mcVersion) {
     versionId: version.id,
   };
 }
+async function getVanillaDownload(mcVersion) {
+  const manifestRaw = await httpGet('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json');
+  const manifest = JSON.parse(manifestRaw);
+  const versionEntry = manifest.versions.find((v) => v.id === mcVersion);
+  if (!versionEntry) {
+    throw new Error(`Vanilla version "${mcVersion}" not found in Mojang manifest`);
+  }
+  const versionRaw = await httpGet(versionEntry.url);
+  const versionData = JSON.parse(versionRaw);
+  if (!versionData.downloads || !versionData.downloads.server) {
+    throw new Error(`No server download available for Vanilla ${mcVersion}`);
+  }
+  const serverDl = versionData.downloads.server;
+  const fileName = `server-${mcVersion}.jar`;
+  return { url: serverDl.url, fileName };
+}
+
 module.exports = {
   httpGet,
   downloadFile,
   getPaperDownload,
   getFabricDownload,
+  getVanillaDownload,
   searchModrinth,
   getModrinthDownload,
 };
