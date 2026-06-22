@@ -15,6 +15,8 @@
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-React-black.svg?logo=next.js" />
 </p>
 
+> ⭐ **If you find CubeLauncher useful, please consider giving it a star on GitHub! It helps the project grow and reach more people.** ⭐
+
 ---
 
 <details open>
