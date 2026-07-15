@@ -19,6 +19,8 @@
     "new_server": "Новий Сервер"
   },
   "settings": {
+    "title": "Налаштування",
+    "subtitle": "Управління ресурсами, мережею та ігровими правилами",
     "language": "Мова інтерфейсу",
     "language_desc": "Оберіть мову програми",
     "english": "English",
@@ -75,5 +77,44 @@
     "downloading": "Завантаження...",
     "custom_core": "Власне ядро",
     "select_jar": "Вибрати існуючий .jar"
+  },
+  "store": {
+    "marketplace": "Магазин",
+    "marketplace_unavailable": "Магазин недоступний",
+    "search_placeholder": "Шукати {{content}}…",
+    "mods": "моди",
+    "plugins": "плагіни",
+    "title_for_core": "{{contentType}} для {{coreName}}",
+    "results_count": "{{count}} результатів",
+    "searching_modrinth": "Пошук на Modrinth…",
+    "no_results": "Результатів не знайдено.",
+    "search_failed": "Помилка пошуку",
+    "by_author": "від {{author}}",
+    "unknown_author": "Невідомий автор",
+    "download_failed": "Помилка завантаження",
+    "installed": "Встановлено",
+    "install": "Встановити",
+    "retry": "Повторити",
+    "vanilla_empty": {
+      "title": "Немає магазину для Vanilla",
+      "description": "Сервери Vanilla працюють на незміненому Minecraft і не підтримують плагіни або моди.",
+      "hint": "Перемкніться на Paper, Forge або Fabric для встановлення контенту",
+      "tooltip": "Vanilla не підтримує плагіни або моди — виберіть модифіковане ядро."
+    }
+  },
+  "loading": {
+    "initializing": "Ініціалізація CubeForge…"
+  },
+  "welcome": {
+    "title": "Ласкаво просимо до CubeForge",
+    "description": "Виберіть директорію для робочої папки сервера Minecraft перед початком роботи."
+  },
+  "common": {
+    "search": "Пошук…"
+  },
+  "notifications": {
+    "title": "Сповіщення",
+    "clear_all": "Очистити все",
+    "empty": "Немає нових сповіщень"
   }
 }
