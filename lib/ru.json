@@ -77,5 +77,44 @@
     "downloading": "Загрузка...",
     "custom_core": "Своё ядро",
     "select_jar": "Выбрать существующий .jar-файл"
+  },
+  "store": {
+    "marketplace": "Магазин",
+    "marketplace_unavailable": "Магазин недоступен",
+    "search_placeholder": "Искать {{content}}…",
+    "mods": "моды",
+    "plugins": "плагины",
+    "title_for_core": "{{contentType}} для {{coreName}}",
+    "results_count": "{{count}} результатов",
+    "searching_modrinth": "Поиск на Modrinth…",
+    "no_results": "Результатов не найдено.",
+    "search_failed": "Ошибка поиска",
+    "by_author": "от {{author}}",
+    "unknown_author": "Неизвестный автор",
+    "download_failed": "Ошибка загрузки",
+    "installed": "Установлено",
+    "install": "Установить",
+    "retry": "Повторить",
+    "vanilla_empty": {
+      "title": "Нет магазина для Vanilla",
+      "description": "Серверы Vanilla работают на неизменённом Minecraft и не поддерживают плагины или моды.",
+      "hint": "Переключитесь на Paper, Forge или Fabric для установки контента",
+      "tooltip": "Vanilla не поддерживает плагины или моды — выберите модифицированное ядро."
+    }
+  },
+  "loading": {
+    "initializing": "Инициализация CubeForge…"
+  },
+  "welcome": {
+    "title": "Добро пожаловать в CubeForge",
+    "description": "Выберите директорию для рабочей папки сервера Minecraft перед началом работы."
+  },
+  "common": {
+    "search": "Поиск…"
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "clear_all": "Очистить всё",
+    "empty": "Нет новых уведомлений"
   }
 }
