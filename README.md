@@ -46,11 +46,11 @@ The goal of the project is to make local server management easier and remove rep
 ## Tech Stack
 
 <p>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg" />
 </p>
 
 ## Installation
@@ -95,11 +95,11 @@ CubeLauncher — десктопное приложение, созданное �
 ## Технологии
 
 <p>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg" />
 </p>
 
 ## Установка
@@ -144,11 +144,11 @@ CubeLauncher — це десктопний застосунок для біль�
 ## Технології
 
 <p>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg"/>
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg" />
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg" />
 </p>
 
 ## Встановлення
