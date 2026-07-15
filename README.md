@@ -46,11 +46,11 @@ The goal of the project is to make local server management easier and remove rep
 ## Tech Stack
 
 <p>
-  <img src="https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white"/>
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react"/>
-  <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Electron-191970?style=for-the-badge&logo=electron&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg"/>
 </p>
 
 ## Installation
@@ -95,11 +95,11 @@ CubeLauncher — десктопное приложение, созданное �
 ## Технологии
 
 <p>
-  <img src="https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white"/>
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react"/>
-  <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Electron-191970?style=for-the-badge&logo=electron&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg"/>
 </p>
 
 ## Установка
@@ -144,11 +144,11 @@ CubeLauncher — це десктопний застосунок для біль�
 ## Технології
 
 <p>
-  <img src="https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white"/>
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react"/>
-  <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Electron-191970?style=for-the-badge&logo=electron&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NextJS/nextjs1.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/React/react2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/TailwindCSS/tailwindcss2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Electron/electron2.svg"/>
+  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/NodeJS/nodejs2.svg"/>
 </p>
 
 ## Встановлення
