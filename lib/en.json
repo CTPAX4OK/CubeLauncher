@@ -77,5 +77,44 @@
     "downloading": "Downloading...",
     "custom_core": "Custom Core",
     "select_jar": "Select existing .jar"
+  },
+  "store": {
+    "marketplace": "Marketplace",
+    "marketplace_unavailable": "Marketplace unavailable",
+    "search_placeholder": "Search {{content}}…",
+    "mods": "mods",
+    "plugins": "plugins",
+    "title_for_core": "{{contentType}} for {{coreName}}",
+    "results_count": "{{count}} results",
+    "searching_modrinth": "Searching Modrinth…",
+    "no_results": "No results found.",
+    "search_failed": "Search failed",
+    "by_author": "by {{author}}",
+    "unknown_author": "Unknown",
+    "download_failed": "Download failed",
+    "installed": "Installed",
+    "install": "Install",
+    "retry": "Retry",
+    "vanilla_empty": {
+      "title": "No marketplace for Vanilla",
+      "description": "Vanilla servers run unmodified Minecraft and don't support plugins or mods.",
+      "hint": "Switch to Paper, Forge, or Fabric to install content",
+      "tooltip": "Vanilla doesn't support plugins or mods — pick a modded core."
+    }
+  },
+  "loading": {
+    "initializing": "Initializing CubeForge…"
+  },
+  "welcome": {
+    "title": "Welcome to CubeForge",
+    "description": "Select a directory to use as your Minecraft server workspace before getting started."
+  },
+  "common": {
+    "search": "Search…"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "clear_all": "Clear all",
+    "empty": "No new notifications"
   }
 }
