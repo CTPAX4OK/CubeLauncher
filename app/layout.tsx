@@ -8,10 +8,9 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 export const metadata: Metadata = {
-  title: 'CubeForge — Minecraft Server Launcher',
+  title: 'CubeLauncher — Minecraft Server Launcher',
   description:
     'Create, configure, and manage Minecraft servers across Vanilla, Paper, Forge, and Fabric.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {
@@ -46,6 +45,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`dark bg-background ${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
     >
       <body className="font-sans antialiased">
         {children}

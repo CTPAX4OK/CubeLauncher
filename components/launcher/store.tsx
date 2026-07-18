@@ -1,10 +1,13 @@
 "use client"
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useTranslation } from 'react-i18next'
 import { cn } from "@/lib/utils"
 import { useElectron } from "@/lib/use-electron"
 import { CORES, PLUGINS, MODS, VERSIONS, type CoreId, type StoreItem } from "@/lib/launcher-data"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Star, Download, Check, Ban, Search, Package, Puzzle, Info, Loader2, AlertCircle } from "lucide-react"
+import { InstallModal } from "./install-modal"
+
 interface ModrinthHit {
   id: string
   slug: string
@@ -22,6 +25,7 @@ function formatDownloads(n: number): string {
   return String(n)
 }
 export function Store() {
+  const { t } = useTranslation()
   const [core, setCore] = useState<CoreId>("paper")
   const [query, setQuery] = useState("")
   const { isElectron } = useElectron()
@@ -51,7 +55,7 @@ export function Store() {
         setTotalHits(result.totalHits)
         if (result.error) setSearchError(result.error)
       } catch (err: any) {
-        setSearchError(err.message ?? "Search failed")
+        setSearchError(err.message ?? t('store.search_failed'))
         setLiveHits([])
         setTotalHits(0)
       } finally {
@@ -110,7 +114,7 @@ export function Store() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             disabled={isDisabled}
-            placeholder={isDisabled ? "Marketplace unavailable" : `Search ${active.content}…`}
+            placeholder={isDisabled ? t('store.marketplace_unavailable') : t('store.search_for', { content: active.content })}
             className="h-9 w-full rounded-lg border border-input bg-background pr-3 pl-8 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
           />
         </div>
@@ -119,12 +123,12 @@ export function Store() {
       <div className="flex items-center gap-2">
         <h2 className="font-heading text-sm font-semibold text-foreground">
           {isDisabled
-            ? "Marketplace"
-            : `${active.content === "mods" ? "Mods" : "Plugins"} for ${active.name}`}
+            ? t('store.marketplace')
+            : `${active.content === "mods" ? t('store.mods') : t('store.plugins')} ${t('store.for')} ${active.name}`}
         </h2>
         {!isDisabled && (
           <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
-            {loading ? "…" : `${resultCount} results`}
+            {loading ? "…" : `${resultCount} ${t('store.results')}`}
           </span>
         )}
         {loading && <Loader2 className="size-4 animate-spin text-primary" />}
@@ -146,6 +150,7 @@ export function Store() {
   )
 }
 function VanillaEmptyState() {
+  const { t } = useTranslation()
   return (
     <Tooltip>
       <TooltipTrigger
@@ -158,20 +163,20 @@ function VanillaEmptyState() {
               <Ban className="size-6" />
             </span>
             <div>
-              <p className="font-heading text-sm font-semibold text-foreground">No marketplace for Vanilla</p>
+              <p className="font-heading text-sm font-semibold text-foreground">{t('store.no_vanilla')}</p>
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Vanilla servers run unmodified Minecraft and don&apos;t support plugins or mods.
+                {t('store.no_vanilla_desc')}
               </p>
             </div>
             <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
               <Info className="size-3.5" />
-              Switch to Paper, Forge, or Fabric to install content
+              {t('store.no_vanilla_hint')}
             </span>
           </div>
         }
       />
       <TooltipContent side="top">
-        Vanilla doesn&apos;t support plugins or mods — pick a modded core.
+        {t('store.no_vanilla_tooltip')}
       </TooltipContent>
     </Tooltip>
   )
@@ -185,18 +190,19 @@ function LiveStoreGrid({
   loading: boolean
   coreType: CoreId
 }) {
+  const { t } = useTranslation()
   if (loading && hits.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="size-6 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Searching Modrinth…</p>
+          <p className="text-sm text-muted-foreground">{t('store.searching')}</p>
         </div>
       </div>
     )
   }
   if (hits.length === 0) {
-    return <p className="py-10 text-center text-sm text-muted-foreground">No results found on Modrinth.</p>
+    return <p className="py-10 text-center text-sm text-muted-foreground">{t('store.no_results')}</p>
   }
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -207,9 +213,12 @@ function LiveStoreGrid({
   )
 }
 function LiveStoreCard({ hit, coreType }: { hit: ModrinthHit; coreType: CoreId }) {
+  const { t } = useTranslation()
   const [status, setStatus] = useState<"idle" | "downloading" | "installed" | "error">("idle")
   const [progress, setProgress] = useState(0)
   const [errorMsg, setErrorMsg] = useState("")
+  const [showModal, setShowModal] = useState(false)
+  const { setRememberInstallPath } = useElectron()
   useEffect(() => {
     if (window.electronAPI && window.electronAPI.checkInstalled) {
       window.electronAPI.checkInstalled(hit.slug, coreType as string).then(installed => {
@@ -217,8 +226,16 @@ function LiveStoreCard({ hit, coreType }: { hit: ModrinthHit; coreType: CoreId }
       })
     }
   }, [hit.slug, coreType])
-  const handleInstall = async () => {
+  const initiateInstall = () => {
+    setShowModal(true)
+  }
+
+  const handleInstall = async (targetPath: string, remember: boolean) => {
+    setShowModal(false)
     if (!window.electronAPI) return
+    if (remember) {
+      await setRememberInstallPath(true)
+    }
     setStatus("downloading")
     setProgress(0)
     const unsub = window.electronAPI.onDownloadProgress((data) => {
@@ -231,17 +248,18 @@ function LiveStoreCard({ hit, coreType }: { hit: ModrinthHit; coreType: CoreId }
       const result = await window.electronAPI.downloadPlugin(
         hit.id,
         coreType as string,
-        latestVersion
+        latestVersion,
+        targetPath
       )
       if (result.success) {
         setStatus("installed")
       } else {
         setStatus("error")
-        setErrorMsg(result.error ?? "Download failed")
+        setErrorMsg(result.error ?? t('store.download_failed'))
       }
     } catch (err: any) {
       setStatus("error")
-      setErrorMsg(err.message ?? "Download failed")
+      setErrorMsg(err.message ?? t('store.download_failed'))
     } finally {
       unsub()
     }
@@ -262,10 +280,10 @@ function LiveStoreCard({ hit, coreType }: { hit: ModrinthHit; coreType: CoreId }
         )}
         <div className="min-w-0 flex-1">
           <p className="truncate font-heading text-sm font-semibold text-card-foreground">{hit.name}</p>
-          <p className="truncate text-xs text-muted-foreground">by {hit.author ?? "Unknown"}</p>
+          <p className="truncate text-xs text-muted-foreground">{t('store.by')} {hit.author ?? t('store.unknown_author')}</p>
         </div>
-        <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-          {hit.projectType}
+        <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          {t(`store.type_${hit.projectType.toLowerCase()}`, { defaultValue: hit.projectType })}
         </span>
       </div>
       <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{hit.description}</p>
@@ -285,7 +303,7 @@ function LiveStoreCard({ hit, coreType }: { hit: ModrinthHit; coreType: CoreId }
           </span>
         </div>
         <button
-          onClick={handleInstall}
+          onClick={initiateInstall}
           disabled={status === "downloading" || status === "installed"}
           className={cn(
             "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
@@ -299,32 +317,43 @@ function LiveStoreCard({ hit, coreType }: { hit: ModrinthHit; coreType: CoreId }
           )}
         >
           {status === "installed" ? (
-            <><Check className="size-3.5" /> Installed</>
+            <><Check className="size-3.5" /> {t('store.installed')}</>
           ) : status === "downloading" ? (
             <><Loader2 className="size-3.5 animate-spin" /> {progress}%</>
           ) : status === "error" ? (
-            <><AlertCircle className="size-3.5" /> Retry</>
+            <><AlertCircle className="size-3.5" /> {t('store.retry')}</>
           ) : (
-            <><Download className="size-3.5" /> Install</>
+            <><Download className="size-3.5" /> {t('store.install')}</>
           )}
         </button>
       </div>
+      
+      {showModal && (
+        <InstallModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          onConfirm={handleInstall}
+          itemName={hit.name}
+        />
+      )}
     </div>
   )
 }
 function MockStoreGrid({ items }: { items: StoreItem[] }) {
+  const { t } = useTranslation()
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {items.map((item) => (
         <MockStoreCard key={item.id} item={item} />
       ))}
       {items.length === 0 && (
-        <p className="col-span-full py-10 text-center text-sm text-muted-foreground">No results found.</p>
+        <p className="col-span-full py-10 text-center text-sm text-muted-foreground">{t('store.no_results')}</p>
       )}
     </div>
   )
 }
 function MockStoreCard({ item }: { item: StoreItem }) {
+  const { t } = useTranslation()
   const [installed, setInstalled] = useState(Boolean(item.installed))
   return (
     <div className="flex flex-col rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
@@ -334,10 +363,10 @@ function MockStoreCard({ item }: { item: StoreItem }) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-heading text-sm font-semibold text-card-foreground">{item.name}</p>
-          <p className="truncate text-xs text-muted-foreground">by {item.author}</p>
+          <p className="truncate text-xs text-muted-foreground">{t('store.by')} {item.author}</p>
         </div>
-        <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-          {item.category}
+        <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          {t(`store.cat_${item.category.toLowerCase().replace(' ', '_')}`, { defaultValue: item.category })}
         </span>
       </div>
       <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
@@ -360,9 +389,9 @@ function MockStoreCard({ item }: { item: StoreItem }) {
           )}
         >
           {installed ? (
-            <><Check className="size-3.5" /> Installed</>
+            <><Check className="size-3.5" /> {t('store.installed')}</>
           ) : (
-            <><Download className="size-3.5" /> Install</>
+            <><Download className="size-3.5" /> {t('store.install')}</>
           )}
         </button>
       </div>

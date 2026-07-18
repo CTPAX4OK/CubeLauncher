@@ -1,8 +1,9 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import "@/lib/i18n"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ElectronProvider, useElectron } from "@/lib/use-electron"
+import { ThemeProvider } from "@/lib/theme-provider"
 import { Sidebar, type View } from "@/components/launcher/sidebar"
 import { VersionMatrix } from "@/components/launcher/version-matrix"
 import { Store } from "@/components/launcher/store"
@@ -13,74 +14,78 @@ import { Players } from "@/components/launcher/players"
 import { Backups } from "@/components/launcher/backups"
 import { GlobalCommand } from "@/components/launcher/global-command"
 import { SystemAlert } from "@/components/launcher/system-alert"
+import { Onboarding } from "@/components/launcher/onboarding"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Bell, Plus, Search, FolderOpen, Loader2, Minus, Maximize2, X } from "lucide-react"
-const META: Record<View, { title: string; subtitle: string }> = {
-  dashboard: { title: "Version Matrix", subtitle: "Spin up a new server from any version and core" },
-  store: { title: "Content Store", subtitle: "Browse plugins and mods for your active core" },
-  files: { title: "File Explorer", subtitle: "Browse the server directory and edit configs" },
-  settings: { title: "Settings", subtitle: "Tune resources, network, and gameplay rules" },
-  console: { title: "Console", subtitle: "Live server logs and terminal input" },
-  players: { title: "Player Manager", subtitle: "Manage online players via RCON" },
-  backups: { title: "Backup Manager", subtitle: "Create ZIP archives of your server data" },
-}
+import { useTranslation } from "react-i18next"
+
 export default function Page() {
   return (
     <ElectronProvider>
-      <TooltipProvider delay={150}>
-        <AppShell />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider delay={150}>
+          <AppShell />
+        </TooltipProvider>
+      </ThemeProvider>
     </ElectronProvider>
   )
 }
-import { useTranslation } from "react-i18next"
 
 function AppShell() {
+  const { t } = useTranslation()
   const [view, setView] = useState<View>("dashboard")
   const [cmdOpen, setCmdOpen] = useState(false)
-  const { t } = useTranslation()
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null)
+
+  const META: Record<View, { title: string; subtitle: string }> = {
+    dashboard: { title: t('matrix.title', 'Version Matrix'), subtitle: t('matrix.subtitle', 'Spin up a new server from any version and core') },
+    store: { title: t('store.title', 'Content Store'), subtitle: t('store.subtitle', 'Browse plugins and mods for your active core') },
+    files: { title: t('files.title', 'File Explorer'), subtitle: t('files.subtitle', 'Browse the server directory and edit configs') },
+    settings: { title: t('settings.title', 'Settings'), subtitle: t('settings.subtitle', 'Tune resources, network, and gameplay rules') },
+    console: { title: t('console.title', 'Console'), subtitle: t('console.subtitle', 'Live server logs and terminal input') },
+    players: { title: t('players.title', 'Player Manager'), subtitle: t('players.subtitle', 'Manage online players via RCON') },
+    backups: { title: t('backups.title', 'Backup Manager'), subtitle: t('backups.subtitle', 'Create ZIP archives of your server data') },
+  }
+
   const meta = META[view] || { title: "Loading...", subtitle: "" }
   const { initializing, serverPath, selectFolder, isElectron, minimizeWindow, maximizeWindow, closeWindow } = useElectron()
-  if (initializing) {
+
+  useEffect(() => {
+    const api = (window as any).electronAPI
+    if (!api) {
+      setOnboardingComplete(true)
+      return
+    }
+    api.getOnboardingComplete?.().then((val: boolean) => {
+      setOnboardingComplete(val)
+    }).catch(() => setOnboardingComplete(true))
+  }, [])
+
+  if (initializing || onboardingComplete === null) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="size-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Initializing CubeForge…</p>
+          <p className="text-sm text-muted-foreground">Initializing CubeLauncher…</p>
         </div>
       </div>
     )
   }
-  if (isElectron && !serverPath) {
+
+  if (isElectron && (!onboardingComplete || !serverPath)) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card p-10 text-center">
-          <span className="flex size-14 items-center justify-center rounded-xl bg-primary/10">
-            <FolderOpen className="size-7 text-primary" />
-          </span>
-          <div>
-            <h2 className="font-heading text-lg font-semibold text-foreground">Welcome to CubeForge</h2>
-            <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-              Select a directory to use as your Minecraft server workspace before getting started.
-            </p>
-          </div>
-          <button
-            onClick={selectFolder}
-            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            <FolderOpen className="size-4" />
-            Choose Folder
-          </button>
-        </div>
-      </div>
+      <Onboarding onComplete={() => {
+        setOnboardingComplete(true)
+        window.location.reload()
+      }} />
     )
   }
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
-      {}
       {isElectron && (
         <div className="flex h-9 shrink-0 items-center justify-between border-b border-border bg-sidebar" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
-          <span className="pl-4 text-xs font-medium text-muted-foreground">CubeForge</span>
+          <span className="pl-4 text-xs font-medium text-muted-foreground">CubeLauncher</span>
           <div className="flex" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
             <button onClick={minimizeWindow} className="flex h-9 w-12 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
               <Minus className="size-3.5" />
@@ -97,14 +102,13 @@ function AppShell() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar view={view} onViewChange={setView} />
         <main className="flex flex-1 flex-col overflow-hidden">
-          {}
           <header className="flex items-center justify-between border-b border-border px-6 py-4">
             <div>
               <h1 className="font-heading text-lg font-semibold tracking-tight text-foreground">{meta.title}</h1>
               <p className="text-sm text-muted-foreground">{meta.subtitle}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={() => setCmdOpen(true)}
                 className="hidden items-center gap-2 rounded-lg border border-input bg-card px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex"
               >
@@ -143,7 +147,6 @@ function AppShell() {
               </button>
             </div>
           </header>
-          {}
           <div className="flex-1 overflow-y-auto p-6">
             {view === "dashboard" && <VersionMatrix />}
             {view === "store" && <Store />}

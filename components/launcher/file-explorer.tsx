@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { useElectron } from "@/lib/use-electron"
 import { type FileNode } from "@/lib/launcher-data"
@@ -38,12 +39,14 @@ function TreeItem({
   selected,
   onSelect,
   path = "",
+  t,
 }: {
   node: FileNode
   depth: number
   selected: string
   onSelect: (name: string) => void
   path?: string
+  t: (key: string) => string
 }) {
   const [open, setOpen] = useState(depth === 0 && node.name === "plugins")
   const isFolder = node.type === "folder"
@@ -74,11 +77,11 @@ function TreeItem({
         <div>
           {node.children.length === 0 ? (
             <p style={{ paddingLeft: (depth + 1) * 14 + 22 }} className="py-1 text-xs text-muted-foreground/60">
-              empty
+              {t('files.empty')}
             </p>
           ) : (
             node.children.map((child) => (
-              <TreeItem key={child.name} node={child} depth={depth + 1} selected={selected} onSelect={onSelect} path={fullPath} />
+              <TreeItem key={child.name} node={child} depth={depth + 1} selected={selected} onSelect={onSelect} path={fullPath} t={t} />
             ))
           )}
         </div>
@@ -87,6 +90,7 @@ function TreeItem({
   )
 }
 export function FileExplorer() {
+  const { t } = useTranslation()
   const { readWorkspace, readFile, saveFile, serverPath } = useElectron()
   const [selected, setSelected] = useState<string | null>(null)
   const [content, setContent] = useState("")
@@ -122,17 +126,17 @@ export function FileExplorer() {
       {}
       <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <p className="font-heading text-sm font-semibold text-card-foreground">Files</p>
+          <p className="font-heading text-sm font-semibold text-card-foreground">{t('files.files_heading')}</p>
           <span className="truncate rounded-md bg-secondary px-2 py-0.5 font-mono text-[11px] text-muted-foreground max-w-[140px]" title={serverPath || ""}>
-            {serverPath ? serverPath.split(/[\\/]/).pop() : "No Workspace"}
+            {serverPath ? serverPath.split(/[\\/]/).pop() : t('files.no_workspace')}
           </span>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
           {tree.map((node) => (
-            <TreeItem key={node.name} node={node} depth={0} selected={selected || ""} onSelect={(n) => { setSelected(n); setDirty(false) }} />
+            <TreeItem key={node.name} node={node} depth={0} selected={selected || ""} onSelect={(n) => { setSelected(n); setDirty(false) }} t={t} />
           ))}
           {tree.length === 0 && (
-            <p className="p-4 text-center text-sm text-muted-foreground">Workspace is empty or not selected.</p>
+            <p className="p-4 text-center text-sm text-muted-foreground">{t('files.workspace_empty')}</p>
           )}
         </div>
       </div>
@@ -141,8 +145,8 @@ export function FileExplorer() {
         <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
           <div className="flex items-center gap-2">
             <FileCode className="size-4 text-primary" />
-            <span className="font-mono text-sm text-foreground">{selected || "No file selected"}</span>
-            {dirty && <span className="size-1.5 rounded-full bg-primary" aria-label="Unsaved changes" />}
+            <span className="font-mono text-sm text-foreground">{selected || t('files.no_file_selected')}</span>
+            {dirty && <span className="size-1.5 rounded-full bg-primary" aria-label={t('files.unsaved_changes')} />}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -150,14 +154,14 @@ export function FileExplorer() {
               disabled={!selected}
               className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
             >
-              <RotateCcw className="size-3.5" /> Revert
+              <RotateCcw className="size-3.5" /> {t('files.revert')}
             </button>
             <button
               onClick={handleSave}
               disabled={!selected}
               className="flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              <Save className="size-3.5" /> Save
+              <Save className="size-3.5" /> {t('files.save')}
             </button>
           </div>
         </div>
@@ -182,7 +186,7 @@ export function FileExplorer() {
           />
         </div>
         <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">
-          <span>{selected ? `${lines.length} lines` : ""}</span>
+          <span>{selected ? `${lines.length} ${t('files.lines')}` : ""}</span>
           <span className="font-mono">UTF-8</span>
         </div>
       </div>

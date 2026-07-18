@@ -160,7 +160,6 @@ export function VersionMatrix() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Динамическая статистика */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {dynamicStats.map((s, i) => {
           const Icon = s.icon
@@ -202,7 +201,6 @@ export function VersionMatrix() {
         })}
       </div>
 
-      {/* Быстрое создание сервера */}
       <div id="quick-create">
         <h2 className="mb-3 font-heading text-sm font-semibold text-foreground">
           {t('matrix.quick_create')}
@@ -254,13 +252,12 @@ export function VersionMatrix() {
                     ? t('matrix.downloading')
                     : !canDownload
                       ? t('matrix.coming_soon')
-                      : core.tagline}
+                      : t(`matrix.core_${core.id}_tagline`, { defaultValue: core.tagline })}
                 </p>
               </button>
             )
           })}
 
-          {/* Кнопка добавления кастомного JAR */}
           <button
             onClick={() => selectCustomJar && selectCustomJar()}
             className="animate-card-enter group flex flex-col items-start rounded-xl border border-dashed border-border bg-transparent p-4 text-left transition-all duration-300 hover:border-primary/50 hover:bg-card/40 hover:shadow-[0_0_20px_-4px] hover:shadow-primary/20"
@@ -283,7 +280,6 @@ export function VersionMatrix() {
         </div>
       </div>
 
-      {/* Таблица версий */}
       <div className="rounded-xl border border-border bg-card">
         <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -308,7 +304,6 @@ export function VersionMatrix() {
           </div>
         </div>
 
-        {/* Заголовки таблицы */}
         <div className="grid grid-cols-[1.2fr_repeat(4,1fr)] gap-2 border-b border-border px-4 py-2.5">
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {t('matrix.version')}
@@ -321,7 +316,6 @@ export function VersionMatrix() {
           ))}
         </div>
 
-        {/* Строки таблицы */}
         <div className="divide-y divide-border">
           {rows.map((row) => (
             <div

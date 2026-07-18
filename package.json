@@ -1,6 +1,6 @@
 {
   "name": "CubeLauncher",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -10,7 +10,9 @@
     "start": "next start",
     "lint": "eslint .",
     "release": "npm run build && electron-builder --win",
-    "release:linux": "npm run build && electron-builder --linux"
+    "postrelease": "node rename.js",
+    "release:linux": "npm run build && electron-builder --linux",
+    "postrelease:linux": "node rename.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -53,28 +55,41 @@
   "build": {
     "appId": "com.cubelauncher.app",
     "productName": "CubeLauncher",
+    "icon": "build/icon.png",
     "win": {
+      "icon": "build/icon.png",
       "target": [
-        "nsis",
-        "portable"
-      ],
-      "icon": "build/icon.ico"
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64", "ia32"]
+        }
+      ]
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "Win-${arch}-setup.${ext}",
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "include": "build/installer.nsh"
     },
     "portable": {
-      "artifactName": "${productName}_Portable_${version}.${ext}"
+      "artifactName": "Win-${arch}-portable.${ext}"
     },
     "linux": {
       "target": [
-        "tar.gz"
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "tar.gz",
+          "arch": ["x64"]
+        }
       ],
+      "artifactName": "Linux-${arch}.${ext}",
       "icon": "build/icon.png",
       "category": "Utility"
     },

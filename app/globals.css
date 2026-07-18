@@ -51,14 +51,12 @@
 :root,
 .dark {
   color-scheme: dark;
-  /* Dark gaming base — near-black with a faint cool tint */
   --background: oklch(0.17 0.012 160);
   --foreground: oklch(0.96 0.005 160);
   --card: oklch(0.21 0.013 160);
   --card-foreground: oklch(0.96 0.005 160);
   --popover: oklch(0.2 0.013 160);
   --popover-foreground: oklch(0.96 0.005 160);
-  /* Neon green primary accent */
   --primary: oklch(0.86 0.23 142);
   --primary-foreground: oklch(0.18 0.04 150);
   --secondary: oklch(0.26 0.014 160);
@@ -87,6 +85,42 @@
   --sidebar-ring: oklch(0.86 0.23 142);
 }
 
+.light {
+  color-scheme: light;
+  --background: oklch(0.98 0.002 160);
+  --foreground: oklch(0.15 0.01 160);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.01 160);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.01 160);
+  --primary: oklch(0.55 0.20 142);
+  --primary-foreground: oklch(0.98 0.005 160);
+  --secondary: oklch(0.94 0.006 160);
+  --secondary-foreground: oklch(0.20 0.01 160);
+  --muted: oklch(0.93 0.005 160);
+  --muted-foreground: oklch(0.50 0.01 160);
+  --accent: oklch(0.94 0.03 150);
+  --accent-foreground: oklch(0.30 0.08 145);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0 0 0 / 10%);
+  --input: oklch(0 0 0 / 12%);
+  --ring: oklch(0.55 0.20 142);
+  --chart-1: oklch(0.55 0.20 142);
+  --chart-2: oklch(0.55 0.15 195);
+  --chart-3: oklch(0.60 0.16 85);
+  --chart-4: oklch(0.55 0.18 30);
+  --chart-5: oklch(0.50 0.12 260);
+  --radius: 0.7rem;
+  --sidebar: oklch(0.96 0.004 160);
+  --sidebar-foreground: oklch(0.20 0.01 160);
+  --sidebar-primary: oklch(0.55 0.20 142);
+  --sidebar-primary-foreground: oklch(0.98 0.005 160);
+  --sidebar-accent: oklch(0.94 0.02 150);
+  --sidebar-accent-foreground: oklch(0.30 0.08 145);
+  --sidebar-border: oklch(0 0 0 / 8%);
+  --sidebar-ring: oklch(0.55 0.20 142);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -98,7 +132,6 @@
     @apply font-sans;
   }
 
-  /* Custom sleek scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;

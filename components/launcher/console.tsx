@@ -1,9 +1,11 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
+import { useTranslation } from 'react-i18next'
 import { useElectron } from "@/lib/use-electron"
 import { Terminal, Send } from "lucide-react"
 export function Console() {
   const { getLogs, onServerLog, sendCommand, onServerStats, getSavedRam } = useElectron()
+  const { t } = useTranslation()
   const [logsByServer, setLogsByServer] = useState<Record<string, string[]>>({})
   const [cmd, setCmd] = useState("")
   const [activeTab, setActiveTab] = useState<string | null>(null)
@@ -77,14 +79,14 @@ export function Console() {
   return (
     <div className="flex h-full flex-col gap-4">
       <div>
-        <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">Server Console</h2>
-        <p className="text-sm text-muted-foreground">Live output and command input</p>
+        <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">{t('console.title')}</h2>
+        <p className="text-sm text-muted-foreground">{t('console.subtitle')}</p>
       </div>
       <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-border bg-[#0C0C0C] p-4 shadow-sm">
         <div className="flex items-center gap-2 border-b border-border/50 pb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground overflow-x-auto">
           <Terminal className="size-4 shrink-0" />
           {serverIds.length === 0 ? (
-            <span>Terminal</span>
+            <span>{t('console.terminal')}</span>
           ) : (
             <div className="flex gap-2">
               {serverIds.map(id => {
@@ -105,7 +107,7 @@ export function Console() {
         </div>
         <div className="flex-1 overflow-y-auto whitespace-pre-wrap pt-4 font-mono text-[13px] leading-relaxed text-zinc-300">
           {!activeTab ? (
-            <span className="italic text-zinc-600">Waiting for server to start...</span>
+            <span className="italic text-zinc-600">{t('console.waiting')}</span>
           ) : (
             (logsByServer[activeTab] || []).map((log, i) => (
               <span key={i}>{log}</span>
@@ -118,7 +120,7 @@ export function Console() {
         <input
           value={cmd}
           onChange={(e) => setCmd(e.target.value)}
-          placeholder="Enter a command (e.g. op player)..."
+          placeholder={t('console.send_command')}
           className="h-10 w-full rounded-lg border border-input bg-card pl-4 pr-12 text-sm font-mono text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
         />
         <button

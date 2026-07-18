@@ -27,6 +27,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAikarFlags: () => ipcRenderer.invoke('config:getAikarFlags'),
   setAikarFlags: (val) => ipcRenderer.invoke('config:setAikarFlags', val),
 
+  getLanguage: () => ipcRenderer.invoke('config:getLanguage'),
+  setLanguage: (lang) => ipcRenderer.invoke('config:setLanguage', lang),
+
+  getRecentServers: () => ipcRenderer.invoke('config:getRecentServers'),
+  getRememberInstallPath: () => ipcRenderer.invoke('config:getRememberInstallPath'),
+  setRememberInstallPath: (val) => ipcRenderer.invoke('config:setRememberInstallPath', val),
+
+  getColorTheme: () => ipcRenderer.invoke('config:getColorTheme'),
+  setColorTheme: (themeId) => ipcRenderer.invoke('config:setColorTheme', themeId),
+  getAppearance: () => ipcRenderer.invoke('config:getAppearance'),
+  setAppearance: (mode) => ipcRenderer.invoke('config:setAppearance', mode),
+  getCustomThemes: () => ipcRenderer.invoke('config:getCustomThemes'),
+  setCustomThemes: (themes) => ipcRenderer.invoke('config:setCustomThemes', themes),
+  getOnboardingComplete: () => ipcRenderer.invoke('config:getOnboardingComplete'),
+  setOnboardingComplete: (val) => ipcRenderer.invoke('config:setOnboardingComplete', val),
+  importTheme: () => ipcRenderer.invoke('dialog:importTheme'),
+  exportTheme: (themeData) => ipcRenderer.invoke('dialog:exportTheme', themeData),
+
   startServer: (jarName) => ipcRenderer.invoke('server:start', jarName),
   stopServer: (serverId) => ipcRenderer.invoke('server:stop', serverId),
   sendCommand: (serverId, cmd) => ipcRenderer.invoke('server:command', serverId, cmd),
@@ -83,8 +101,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   searchStore: (opts) => ipcRenderer.invoke('store:search', opts),
   searchModrinth: (opts) => ipcRenderer.invoke('store:search', opts),
 
-  downloadPlugin: (projectId, coreType, mcVersion) =>
-    ipcRenderer.invoke('store:download', projectId, coreType, mcVersion),
+  downloadPlugin: (projectId, coreType, mcVersion, targetDir) =>
+    ipcRenderer.invoke('store:download', projectId, coreType, mcVersion, targetDir),
 
   checkInstalled: (fileName, coreType) =>
     ipcRenderer.invoke('store:checkInstalled', fileName, coreType),

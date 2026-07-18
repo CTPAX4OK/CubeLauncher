@@ -142,7 +142,7 @@ async function searchModrinth({ query, coreType, mcVersion, limit = 20, offset =
   } else if (coreType === 'fabric') {
     facets.push(['categories:fabric']);
   } else if (coreType === 'forge') {
-    facets.push(['categories:forge']);
+    facets.push(['categories:forge', 'categories:neoforge']);
   }
 
   facets.push(['project_type:mod', 'project_type:plugin']);
@@ -171,7 +171,7 @@ async function searchModrinth({ query, coreType, mcVersion, limit = 20, offset =
       downloads: h.downloads,
       iconUrl: h.icon_url,
       categories: h.categories,
-      projectType: h.project_type,
+      projectType: coreType === 'paper' ? 'plugin' : h.project_type,
     })),
     totalHits: data.total_hits || 0,
   };
@@ -181,7 +181,7 @@ async function getModrinthDownload(projectId, coreType, mcVersion) {
   const loaderMap = {
     paper: ['paper', 'bukkit', 'spigot'],
     fabric: ['fabric'],
-    forge: ['forge'],
+    forge: ['forge', 'neoforge'],
   };
 
   const loaders = loaderMap[coreType] || [coreType];

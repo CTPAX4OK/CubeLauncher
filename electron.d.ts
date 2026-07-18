@@ -79,6 +79,8 @@ export interface ElectronAPI {
   setAikarFlags: (val: boolean) => Promise<void>;
   onLocalFilesChanged: (callback: (files: string[]) => void) => () => void;
   selectCustomJar: () => Promise<string | null>;
+  getLanguage: () => Promise<string>;
+  setLanguage: (lang: string) => Promise<void>;
 }
 declare global {
   interface Window {

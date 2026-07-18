@@ -11,7 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useTranslation } from "react-i18next"
-import { MemoryStick, Coffee, Network, SlidersHorizontal, Save, Globe, Loader2 } from "lucide-react"
+import { MemoryStick, Coffee, Network, SlidersHorizontal, Save, Globe, Loader2, Package, Palette, Sun, Moon, Monitor, Upload, Download, Trash2 } from "lucide-react"
+import { useTheme } from "@/lib/theme-provider"
+import { BUILTIN_THEMES, type Appearance } from "@/lib/themes"
+import { cn } from "@/lib/utils"
 function SectionCard({
   icon: Icon,
   title,
@@ -61,7 +64,8 @@ function ToggleRow({
 }
 export function SettingsPanel() {
   const { t, i18n } = useTranslation()
-  const { getRam, getSavedRam, setSavedRam, getJavaPath, setJavaPath, selectFile, saveConfig, readConfig, getAikarFlags, setAikarFlags } = useElectron()
+  const themeCtx = useTheme()
+  const { getRam, getSavedRam, setSavedRam, getJavaPath, setJavaPath, selectFile, saveConfig, readConfig, getAikarFlags, setAikarFlags, getLanguage, setLanguage: setLanguageIPC, rememberInstallPath, setRememberInstallPath } = useElectron()
   const [maxRam, setMaxRam] = useState(32)
   const [ram, setRam] = useState(4)
   const [javaExec, setJavaExec] = useState("")
@@ -77,6 +81,13 @@ export function SettingsPanel() {
     if (getAikarFlags) {
       getAikarFlags().then(setAikarFlagsEnabled)
     }
+    if (getLanguage) {
+      getLanguage().then((lang) => {
+        if (lang && lang !== i18n.language) {
+          i18n.changeLanguage(lang)
+        }
+      })
+    }
     if (readConfig) {
       readConfig().then((data) => {
         if (data) {
@@ -86,10 +97,11 @@ export function SettingsPanel() {
           if (data.onlineMode !== undefined) setOnlineMode(data.onlineMode)
           if (data.pvp !== undefined) setPvp(data.pvp)
           if (data.whitelist !== undefined) setWhitelist(data.whitelist)
+          if (data.hardcore !== undefined) setHardcore(data.hardcore)
         }
       })
     }
-  }, [getRam, getSavedRam, getJavaPath, readConfig, getAikarFlags])
+  }, [getRam, getSavedRam, getJavaPath, readConfig, getAikarFlags, getLanguage])
   const handleSelectJava = async () => {
     if (!selectFile) return
     const path = await selectFile()
@@ -124,6 +136,24 @@ export function SettingsPanel() {
     }
     await saveConfig(configData)
     setSaving(false)
+  }
+
+  const handleToggle = async (key: string, val: boolean) => {
+    if (key === 'onlineMode') setOnlineMode(val)
+    if (key === 'whitelist') setWhitelist(val)
+    if (key === 'pvp') setPvp(val)
+    if (key === 'hardcore') setHardcore(val)
+
+    const configData = {
+      serverPort,
+      queryPort,
+      difficulty,
+      onlineMode: key === 'onlineMode' ? val : onlineMode,
+      pvp: key === 'pvp' ? val : pvp,
+      whitelist: key === 'whitelist' ? val : whitelist,
+      hardcore: key === 'hardcore' ? val : hardcore
+    }
+    await saveConfig(configData)
   }
   return (
     <div className="flex w-full max-w-[1200px] flex-col gap-6 p-6">
@@ -180,7 +210,7 @@ export function SettingsPanel() {
 
         <SectionCard icon={Coffee} title={t('settings.java_runtime')} desc={t('settings.java_desc')}>
           <div className="flex w-full items-center gap-2">
-            <div className="flex h-10 flex-1 items-center rounded-lg border border-input bg-background px-3">
+            <div className="flex h-10 min-w-0 flex-1 items-center overflow-hidden rounded-lg border border-input bg-background px-3">
               <span className="truncate text-sm text-muted-foreground">
                 {javaExec || t('settings.system_default')}
               </span>
@@ -208,7 +238,12 @@ export function SettingsPanel() {
 
       <SectionCard icon={Globe} title={t('settings.language')} desc={t('settings.language_desc')}>
         <div className="w-full max-w-sm">
-          <Select value={i18n.language} onValueChange={(v) => v && i18n.changeLanguage(v)}>
+          <Select value={i18n.language} onValueChange={(v) => {
+            if (v) {
+              i18n.changeLanguage(v);
+              setLanguageIPC(v);
+            }
+          }}>
             <SelectTrigger className="h-10 border-input bg-card text-sm">
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
@@ -218,6 +253,137 @@ export function SettingsPanel() {
               <SelectItem value="uk">{t('settings.ukrainian')}</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </SectionCard>
+
+      <SectionCard icon={Palette} title={t('settings.themes', { defaultValue: 'Themes' })} desc={t('settings.themes_desc', { defaultValue: 'Customize the look and feel of CubeLauncher' })}>
+        <div className="flex flex-col gap-6">
+          <div>
+            <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('settings.color_theme', { defaultValue: 'Color Theme' })}
+            </label>
+            <div className="flex gap-3">
+              {BUILTIN_THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => themeCtx.setColorTheme(theme.id)}
+                  className={cn(
+                    "relative flex size-14 items-center justify-center rounded-xl border-2 transition-all",
+                    themeCtx.colorTheme === theme.id
+                      ? "border-primary shadow-lg shadow-primary/20 scale-110"
+                      : "border-transparent hover:border-muted-foreground/30 hover:scale-105"
+                  )}
+                  style={{ background: theme.preview[1] }}
+                  title={theme.name}
+                >
+                  <div className="flex gap-1">
+                    <div className="h-5 w-4 rounded-sm" style={{ background: theme.preview[0], opacity: 0.9 }} />
+                    <div className="h-5 w-4 rounded-sm" style={{ background: theme.preview[0], opacity: 0.5 }} />
+                  </div>
+                </button>
+              ))}
+              {themeCtx.customThemes.map((ct) => (
+                <div key={ct.name} className="group relative">
+                  <button
+                    onClick={() => themeCtx.setColorTheme(ct.name)}
+                    className={cn(
+                      "flex size-14 items-center justify-center rounded-xl border-2 bg-secondary transition-all",
+                      themeCtx.colorTheme === ct.name
+                        ? "border-primary shadow-lg shadow-primary/20 scale-110"
+                        : "border-transparent hover:border-muted-foreground/30"
+                    )}
+                    title={ct.name}
+                  >
+                    <span className="text-xs font-bold text-muted-foreground">{ct.name.charAt(0).toUpperCase()}</span>
+                  </button>
+                  <button
+                    onClick={() => themeCtx.removeCustomTheme(ct.name)}
+                    className="absolute -top-1 -right-1 hidden size-5 items-center justify-center rounded-full bg-destructive text-white group-hover:flex"
+                  >
+                    <Trash2 className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('settings.appearance_mode', { defaultValue: 'Appearance Mode' })}
+            </label>
+            <div className="flex gap-3">
+              {([
+                { mode: "dark" as Appearance, icon: Moon, label: t('onboarding.dark', { defaultValue: 'Dark' }) },
+                { mode: "light" as Appearance, icon: Sun, label: t('onboarding.light', { defaultValue: 'Light' }) },
+                { mode: "black" as Appearance, icon: Monitor, label: t('onboarding.black', { defaultValue: 'Black' }) },
+              ]).map(({ mode, icon: Icon, label }) => (
+                <button
+                  key={mode}
+                  onClick={() => themeCtx.setAppearance(mode)}
+                  className={cn(
+                    "flex flex-1 flex-col items-center gap-2 rounded-xl border-2 py-4 transition-all",
+                    themeCtx.appearance === mode
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-muted-foreground/30 hover:text-foreground"
+                  )}
+                >
+                  <Icon className="size-5" />
+                  <span className="text-xs font-semibold">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3 border-t border-border pt-4">
+            <button
+              onClick={async () => {
+                const api = (window as any).electronAPI
+                const imported = await api?.importTheme?.()
+                if (imported && imported.name && imported.colors) {
+                  themeCtx.addCustomTheme(imported)
+                }
+              }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <Upload className="size-4" />
+              {t('settings.import_theme', { defaultValue: 'Import Theme' })}
+            </button>
+            <button
+              onClick={async () => {
+                const api = (window as any).electronAPI
+                const data = themeCtx.exportCurrentTheme()
+                await api?.exportTheme?.(data)
+              }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <Download className="size-4" />
+              {t('settings.export_theme', { defaultValue: 'Export Theme' })}
+            </button>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard icon={Package} title={t('settings.store_settings', { defaultValue: 'Store Settings' })} desc={t('settings.store_desc', { defaultValue: 'Configure how mods and plugins are installed' })}>
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-background p-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-foreground">
+                {t('settings.remember_install', { defaultValue: 'Remember install path' })}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {rememberInstallPath 
+                  ? t('settings.remember_enabled', { defaultValue: 'Currently enabled. Mods install automatically.' })
+                  : t('settings.remember_disabled', { defaultValue: 'Currently disabled. You will be asked each time.' })}
+              </span>
+            </div>
+            <button
+              onClick={() => setRememberInstallPath(false)}
+              disabled={!rememberInstallPath}
+              className="h-9 rounded-md bg-destructive/10 px-4 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50"
+            >
+              {t('settings.reset_choice', { defaultValue: 'Reset Choice' })}
+            </button>
+          </div>
         </div>
       </SectionCard>
 
@@ -246,35 +412,15 @@ export function SettingsPanel() {
 
       <SectionCard icon={SlidersHorizontal} title={t('settings.server_rules')} desc={t('settings.server_rules_desc')}>
         <div className="grid gap-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">{t('settings.online_mode')}</label>
-              <p className="text-xs text-muted-foreground">{t('settings.online_mode_desc')}</p>
-            </div>
-            <Switch checked={onlineMode} onCheckedChange={setOnlineMode} />
+          <div className="space-y-1 rounded-xl border border-border bg-background p-4">
+            <ToggleRow label={t('settings.online_mode')} desc={t('settings.online_mode_desc')} checked={onlineMode} onChange={(v) => handleToggle('onlineMode', v)} />
+            <div className="h-px bg-border/50" />
+            <ToggleRow label={t('settings.whitelist')} desc={t('settings.whitelist_desc')} checked={whitelist} onChange={(v) => handleToggle('whitelist', v)} />
+            <div className="h-px bg-border/50" />
+            <ToggleRow label={t('settings.pvp')} desc={t('settings.pvp_desc')} checked={pvp} onChange={(v) => handleToggle('pvp', v)} />
+            <div className="h-px bg-border/50" />
+            <ToggleRow label={t('settings.hardcore')} desc={t('settings.hardcore_desc')} checked={hardcore} onChange={(v) => handleToggle('hardcore', v)} />
           </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">{t('settings.whitelist')}</label>
-              <p className="text-xs text-muted-foreground">{t('settings.whitelist_desc')}</p>
-            </div>
-            <Switch checked={whitelist} onCheckedChange={setWhitelist} />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">{t('settings.pvp')}</label>
-              <p className="text-xs text-muted-foreground">{t('settings.pvp_desc')}</p>
-            </div>
-            <Switch checked={pvp} onCheckedChange={setPvp} />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">{t('settings.hardcore')}</label>
-              <p className="text-xs text-muted-foreground">{t('settings.hardcore_desc')}</p>
-            </div>
-            <Switch checked={hardcore} onCheckedChange={setHardcore} />
-          </div>
-        </div>
         <div className="mt-6 border-t border-border pt-6">
           <label className="mb-3 block text-sm font-medium text-foreground">{t('settings.difficulty')}</label>
           <div className="grid grid-cols-4 gap-2">
@@ -292,6 +438,7 @@ export function SettingsPanel() {
               </button>
             ))}
           </div>
+        </div>
         </div>
       </SectionCard>
     </div>

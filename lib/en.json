@@ -53,6 +53,66 @@
     "aikar_flags": "Aikar's Flags",
     "aikar_desc": "Optimized garbage collection arguments for maximum performance"
   },
+  "store": {
+    "title": "Content Store",
+    "subtitle": "Browse plugins and mods for your active core",
+    "search": "Search plugins and mods...",
+    "all_categories": "All Categories",
+    "sort_relevance": "Relevance",
+    "sort_downloads": "Downloads",
+    "sort_newest": "Newest",
+    "sort_updated": "Updated",
+    "no_results": "No results found",
+    "try_different": "Try a different search query",
+    "downloads": "downloads",
+    "install": "Install",
+    "installed": "Installed",
+    "installing": "Installing...",
+    "type_mod": "Mod",
+    "type_modpack": "Modpack",
+    "type_resourcepack": "Resource Pack",
+    "type_shader": "Shader",
+    "type_plugin": "Plugin",
+    "type_datapack": "Datapack",
+    "cat_admin_tools": "Admin Tools",
+    "cat_permissions": "Permissions",
+    "cat_world": "World",
+    "cat_economy": "Economy",
+    "cat_library": "Library",
+    "cat_compatibility": "Compatibility",
+    "cat_utility": "Utility",
+    "cat_tech": "Tech",
+    "cat_information": "Information",
+    "cat_performance": "Performance"
+  },
+  "files": {
+    "title": "File Explorer",
+    "subtitle": "Browse the server directory and edit configs",
+    "search": "Search files...",
+    "save": "Save",
+    "saving": "Saving...",
+    "select_file": "Select a file to view its contents",
+    "no_files": "No files found"
+  },
+  "console": {
+    "title": "Console",
+    "subtitle": "Live server logs and terminal input",
+    "no_servers": "No Active Servers",
+    "start_to_view": "Start a server to view logs",
+    "send_command": "Enter command...",
+    "clear": "Clear"
+  },
+  "players": {
+    "title": "Player Manager",
+    "subtitle": "Manage online players via RCON",
+    "no_servers": "No Active Servers",
+    "start_to_manage": "Start a server to manage players",
+    "refresh": "Refresh",
+    "kick": "Kick",
+    "ban": "Ban",
+    "op": "OP",
+    "deop": "De-OP"
+  },
   "backups": {
     "title": "Backup Manager",
     "subtitle": "Create ZIP archives of your server data",
@@ -76,6 +136,10 @@
     "coming_soon": "Coming soon",
     "downloading": "Downloading...",
     "custom_core": "Custom Core",
-    "select_jar": "Select existing .jar"
+    "select_jar": "Select existing .jar",
+    "core_vanilla_tagline": "Pure, unmodified Minecraft",
+    "core_paper_tagline": "High-performance plugins",
+    "core_forge_tagline": "The modding standard",
+    "core_fabric_tagline": "Lightweight & modern"
   }
 }

@@ -14,6 +14,8 @@ export interface DownloadState {
 interface ElectronContextValue {
   isElectron: boolean
   serverPath: string | null
+  recentServers: string[]
+  rememberInstallPath: boolean
   initializing: boolean
   runningServers: string[]
   selectFolder: () => Promise<string | void | null>
@@ -40,7 +42,7 @@ interface ElectronContextValue {
   onServerStats?: (callback: (data: { activeServers: string[], cpu: string, ramUsed: number, tps: string, details?: Record<string, { cpu: number, ramUsed: number }> }) => void) => () => void
   onLocalFilesChanged?: (callback: (files: string[]) => void) => () => void
   searchModrinth: (opts: any) => Promise<any>
-  downloadPlugin: (projectId: string, coreType: string, mcVersion: string) => Promise<any>
+  downloadPlugin: (projectId: string, coreType: string, mcVersion: string, targetDir?: string) => Promise<any>
   checkInstalled: (fileName: string, coreType: string) => Promise<boolean>
   readWorkspace: () => Promise<any[]>
   readFile: (filePath: string) => Promise<string | null>
@@ -52,12 +54,19 @@ interface ElectronContextValue {
   selectCustomJar: () => Promise<string | null>
   getAikarFlags: () => Promise<boolean>
   setAikarFlags: (val: boolean) => Promise<void>
+  getLanguage: () => Promise<string>
+  setLanguage: (lang: string) => Promise<void>
+  getRecentServers: () => Promise<string[]>
+  getRememberInstallPath: () => Promise<boolean>
+  setRememberInstallPath: (val: boolean) => Promise<void>
 }
 const ElectronContext = createContext<ElectronContextValue | null>(null)
 export function ElectronProvider({ children }: { children: ReactNode }) {
   const api = getAPI()
   const isElectron = !!api
   const [serverPath, setServerPath] = useState<string | null>(null)
+  const [recentServers, setRecentServers] = useState<string[]>([])
+  const [rememberInstallPath, setRememberInstallPath] = useState(false)
   const [initializing, setInitializing] = useState(true)
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({})
   const [runningServers, setRunningServers] = useState<string[]>([])
@@ -166,9 +175,13 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
       if (!api) return
       try {
         const path = await api.getServerPath()
+        const recents = await api.getRecentServers?.() || []
+        const remember = await api.getRememberInstallPath?.() || false
         if (cancelled) return
+        setServerPath(path)
+        setRecentServers(recents)
+        setRememberInstallPath(remember)
         if (path) {
-          setServerPath(path)
           const files = await api.checkLocalFiles()
           const initDownloads: Record<string, DownloadState> = {}
             for (const file of files) {
@@ -197,36 +210,6 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
             if (Object.keys(initDownloads).length > 0) {
               setDownloads(prev => ({ ...prev, ...initDownloads }))
             }
-        } else {
-          const selected = await api.selectFolder()
-          if (!cancelled && selected) {
-            setServerPath(selected)
-            const files = await api.checkLocalFiles()
-            const initDownloads: Record<string, DownloadState> = {}
-              for (const file of files) {
-                let id = null
-                if (file.startsWith('paper-')) {
-                  const parts = file.split('-')
-                  if (parts.length >= 2) id = `core-paper-${parts[1]}`
-                } else if (file.startsWith('fabric-server-mc.')) {
-                  const match = file.match(/fabric-server-mc\.([^-]+)/)
-                  if (match) id = `core-fabric-${match[1]}`
-                }
-                if (id) {
-                  initDownloads[id] = { id, fileName: file, percent: 100, status: "done" }
-                }
-                if (!id && file.startsWith('server-') && file.endsWith('.jar')) {
-                  const match = file.match(/server-([^.]+(?:\.[^.]+)*)\.jar/)
-                  if (match) {
-                    const vid = `core-vanilla-${match[1]}`
-                    initDownloads[vid] = { id: vid, fileName: file, percent: 100, status: "done" }
-                  }
-                }
-              }
-              if (Object.keys(initDownloads).length > 0) {
-                setDownloads(initDownloads)
-              }
-          }
         }
       } catch (err) {
         console.error("[ElectronProvider] init error:", err)
@@ -310,6 +293,27 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
   const setJavaPath = useCallback(async (p: string) => (api?.setJavaPath ? await api.setJavaPath(p) : undefined), [api])
   const getAikarFlags = useCallback(async () => (api?.getAikarFlags ? await api.getAikarFlags() : false), [api])
   const setAikarFlags = useCallback(async (v: boolean) => (api?.setAikarFlags ? await api.setAikarFlags(v) : undefined), [api])
+  const getLanguage = useCallback(async () => {
+    if (!api) return "en"
+    return api.getLanguage()
+  }, [api])
+  const setLanguage = useCallback(async (lang: string) => {
+    if (!api) return
+    await api.setLanguage(lang)
+  }, [api])
+  const getRecentServers = useCallback(async () => {
+    if (!api) return []
+    return api.getRecentServers?.() || []
+  }, [api])
+  const getRememberInstallPath = useCallback(async () => {
+    if (!api) return false
+    return api.getRememberInstallPath?.() || false
+  }, [api])
+  const setRememberInstallPathLocal = useCallback(async (val: boolean) => {
+    if (!api) return
+    setRememberInstallPath(val)
+    await api.setRememberInstallPath?.(val)
+  }, [api])
   const startServer = useCallback(async (j: string) => (api?.startServer ? await api.startServer(j) : null), [api])
   const stopServer = useCallback(async (s: string) => (api?.stopServer ? await api.stopServer(s) : false), [api])
   const sendCommand = useCallback(async (s: string, c: string) => (api?.sendCommand ? await api.sendCommand(s, c) : false), [api])
@@ -333,6 +337,8 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
       value={{
         isElectron,
         serverPath,
+        recentServers,
+        rememberInstallPath,
         initializing,
         runningServers,
         selectFolder,
@@ -371,6 +377,11 @@ export function ElectronProvider({ children }: { children: ReactNode }) {
         onLocalFilesChanged,
         getAikarFlags,
         setAikarFlags,
+        getLanguage,
+        setLanguage,
+        getRecentServers,
+        getRememberInstallPath,
+        setRememberInstallPath: setRememberInstallPathLocal,
       }}
     >
       {children}

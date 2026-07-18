@@ -22,4 +22,13 @@ i18n
     }
   });
 
+// Load saved language from electron-store on startup
+if (typeof window !== 'undefined' && (window as any).electronAPI?.getLanguage) {
+  (window as any).electronAPI.getLanguage().then((lang: string) => {
+    if (lang && lang !== 'en') {
+      i18n.changeLanguage(lang);
+    }
+  });
+}
+
 export default i18n;

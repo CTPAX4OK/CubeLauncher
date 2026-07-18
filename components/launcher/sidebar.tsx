@@ -131,7 +131,7 @@ export function Sidebar({
           </div>
             <div className="flex-1 mt-3">
               <Select value={selectedJar} onValueChange={(v) => setSelectedJar(v || "")}>
-                <SelectTrigger className="h-8 w-full border-border bg-card text-xs hover:bg-accent/50 focus:ring-0">
+                <SelectTrigger className="h-8 w-full border-border bg-card text-xs hover:bg-accent/50 focus:ring-0 [&>span]:truncate [&>span]:pr-2">
                   <SelectValue placeholder="Select Core" />
                 </SelectTrigger>
                 <SelectContent className="border-border bg-card/95 backdrop-blur-md">

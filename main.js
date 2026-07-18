@@ -69,14 +69,28 @@ const {
 let store;
 async function getStore() {
   if (store) return store;
-  const Store = (await import('electron-store')).default;
-  store = new Store({
-    name: 'cubelauncher-config',
-    defaults: {
-      serverPath: null,   
-    },
-  });
-  return store;
+  console.log('[getStore] importing electron-store...');
+  try {
+    const Store = (await import('electron-store')).default;
+    console.log('[getStore] imported electron-store', typeof Store);
+    store = new Store({
+      name: 'cubelauncher-config',
+      defaults: {
+        serverPath: null,
+        recentServers: [],
+        rememberInstallPath: false,
+        colorTheme: 'default',
+        appearance: 'dark',
+        customThemes: [],
+        onboardingComplete: false,
+      },
+    });
+    console.log('[getStore] instantiated store');
+    return store;
+  } catch (err) {
+    console.error('[getStore] ERROR:', err);
+    throw err;
+  }
 }
 let mainWindow = null;
 function createWindow() {
@@ -87,6 +101,7 @@ function createWindow() {
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     backgroundColor: '#0a0a0b',
+    icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -193,9 +208,15 @@ ipcMain.handle('dialog:selectFolder', async () => {
     properties: ['openDirectory'],
   });
   if (result.canceled || result.filePaths.length === 0) return null;
-  const selectedPath = result.filePaths[0];
   const s = await getStore();
+  const selectedPath = result.filePaths[0];
   s.set('serverPath', selectedPath);
+  
+  let recents = s.get('recentServers') || [];
+  recents = recents.filter(p => p !== selectedPath);
+  recents.unshift(selectedPath);
+  s.set('recentServers', recents);
+
   setupWatcher(selectedPath);
   return selectedPath;
 });
@@ -217,6 +238,18 @@ ipcMain.handle('config:getServerPath', async () => {
 ipcMain.handle('config:setServerPath', async (_event, dirPath) => {
   const s = await getStore();
   s.set('serverPath', dirPath);
+});
+ipcMain.handle('config:getRecentServers', async () => {
+  const s = await getStore();
+  return s.get('recentServers') || [];
+});
+ipcMain.handle('config:getRememberInstallPath', async () => {
+  const s = await getStore();
+  return s.get('rememberInstallPath') || false;
+});
+ipcMain.handle('config:setRememberInstallPath', async (_event, val) => {
+  const s = await getStore();
+  s.set('rememberInstallPath', val);
 });
 ipcMain.handle('config:setRam', async (_event, ramGb) => {
   const s = await getStore();
@@ -241,6 +274,76 @@ ipcMain.handle('config:getAikarFlags', async () => {
 ipcMain.handle('config:setAikarFlags', async (_event, val) => {
   const s = await getStore();
   s.set('useAikarFlags', val);
+});
+ipcMain.handle('config:getLanguage', async () => {
+  const s = await getStore();
+  return s.get('language') || 'en';
+});
+ipcMain.handle('config:setLanguage', async (_event, lang) => {
+  const s = await getStore();
+  s.set('language', lang);
+});
+ipcMain.handle('config:getColorTheme', async () => {
+  const s = await getStore();
+  return s.get('colorTheme') || 'default';
+});
+ipcMain.handle('config:setColorTheme', async (_event, themeId) => {
+  const s = await getStore();
+  s.set('colorTheme', themeId);
+});
+ipcMain.handle('config:getAppearance', async () => {
+  const s = await getStore();
+  return s.get('appearance') || 'dark';
+});
+ipcMain.handle('config:setAppearance', async (_event, mode) => {
+  const s = await getStore();
+  s.set('appearance', mode);
+});
+ipcMain.handle('config:getCustomThemes', async () => {
+  const s = await getStore();
+  return s.get('customThemes') || [];
+});
+ipcMain.handle('config:setCustomThemes', async (_event, themes) => {
+  const s = await getStore();
+  s.set('customThemes', themes);
+});
+ipcMain.handle('config:getOnboardingComplete', async () => {
+  const s = await getStore();
+  return s.get('onboardingComplete') || false;
+});
+ipcMain.handle('config:setOnboardingComplete', async (_event, val) => {
+  const s = await getStore();
+  s.set('onboardingComplete', val);
+});
+ipcMain.handle('dialog:importTheme', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import Theme',
+    filters: [{ name: 'Theme Files', extensions: ['json'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  try {
+    const content = fs.readFileSync(result.filePaths[0], 'utf-8');
+    return JSON.parse(content);
+  } catch (err) {
+    console.error('[dialog:importTheme]', err);
+    return null;
+  }
+});
+ipcMain.handle('dialog:exportTheme', async (_event, themeData) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export Theme',
+    defaultPath: `${themeData.name || 'theme'}.json`,
+    filters: [{ name: 'Theme Files', extensions: ['json'] }],
+  });
+  if (result.canceled || !result.filePath) return false;
+  try {
+    fs.writeFileSync(result.filePath, JSON.stringify(themeData, null, 2), 'utf-8');
+    return true;
+  } catch (err) {
+    console.error('[dialog:exportTheme]', err);
+    return false;
+  }
 });
 ipcMain.handle('config:saveFile', async (_event, configData) => {
   try {
@@ -750,10 +853,10 @@ ipcMain.handle('store:search', async (_event, opts) => {
     return { hits: [], totalHits: 0, error: err.message };
   }
 });
-ipcMain.handle('store:download', async (_event, projectId, coreType, mcVersion) => {
+ipcMain.handle('store:download', async (_event, projectId, coreType, mcVersion, targetDir) => {
   try {
     const s = await getStore();
-    const serverDir = s.get('serverPath');
+    const serverDir = targetDir || s.get('serverPath');
     if (!serverDir) {
       return { success: false, error: 'No server directory configured. Please select a folder first.' };
     }

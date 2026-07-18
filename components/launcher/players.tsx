@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslation } from "react-i18next"
 import { useElectron } from "@/lib/use-electron"
 import { User, Shield, Ban, MessageSquare, RefreshCcw, Command } from "lucide-react"
 
@@ -10,6 +11,7 @@ interface PlayerInfo {
 }
 
 export function Players() {
+  const { t } = useTranslation()
   const { runningServers, rconCommand } = useElectron()
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [players, setPlayers] = useState<PlayerInfo[]>([])
@@ -33,7 +35,7 @@ export function Players() {
     try {
       const res = await rconCommand(activeTab, "list")
       if (!res.success) {
-        setRconError(res.error ?? "Failed to connect to RCON. Ensure the server has fully started.")
+        setRconError(res.error ?? t('players.rcon_failed'))
         setPlayers([])
       } else {
         const text = res.response ?? ""
@@ -66,8 +68,8 @@ export function Players() {
     if (!activeTab || !rconCommand) return
     let cmd = ""
     switch (action) {
-      case "kick": cmd = `kick ${player} Kicked by Admin`; break;
-      case "ban": cmd = `ban ${player} Banned by Admin`; break;
+      case "kick": cmd = `kick ${player} ${t('players.kicked_reason')}`; break;
+      case "ban": cmd = `ban ${player} ${t('players.banned_reason')}`; break;
       case "op": cmd = `op ${player}`; break;
       case "deop": cmd = `deop ${player}`; break;
     }
@@ -81,22 +83,22 @@ export function Players() {
     <div className="flex h-full flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">Player Manager</h2>
-          <p className="text-sm text-muted-foreground">Manage online players via RCON</p>
+          <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">{t('players.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('players.subtitle')}</p>
         </div>
         <button 
           onClick={() => setLastRefresh(Date.now())}
           className="flex items-center gap-2 rounded-md bg-secondary px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <RefreshCcw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('players.refresh')}
         </button>
       </div>
 
       <div className="flex items-center gap-2 border-b border-border/50 pb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground overflow-x-auto">
         <User className="size-4 shrink-0" />
         {runningServers.length === 0 ? (
-          <span>No active servers</span>
+          <span>{t('players.no_servers')}</span>
         ) : (
           <div className="flex gap-2">
             {runningServers.map(id => (
@@ -116,17 +118,17 @@ export function Players() {
         {!activeTab ? (
           <div className="flex h-40 flex-col items-center justify-center gap-2 text-muted-foreground">
             <Ban className="size-8 opacity-20" />
-            <p className="text-sm">Start a server to manage players</p>
+            <p className="text-sm">{t('players.start_to_manage')}</p>
           </div>
         ) : rconError ? (
           <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
-            <strong className="block mb-1 font-semibold">RCON Error</strong>
+            <strong className="block mb-1 font-semibold">{t('players.rcon_error')}</strong>
             {rconError}
           </div>
         ) : players.length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center gap-2 text-muted-foreground">
             <User className="size-8 opacity-20" />
-            <p className="text-sm">No players online</p>
+            <p className="text-sm">{t('players.no_players')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -141,22 +143,22 @@ export function Players() {
                   <div className="flex flex-col">
                     <span className="font-heading font-semibold text-foreground">{p.name}</span>
                     <span className="text-xs text-green-500 flex items-center gap-1">
-                      <span className="size-2 rounded-full bg-green-500 animate-pulse"></span> Online
+                      <span className="size-2 rounded-full bg-green-500 animate-pulse"></span> {t('players.online')}
                     </span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <button onClick={() => executeAction(p.name, 'kick')} className="flex items-center justify-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-orange-500/20 hover:text-orange-500">
-                    <Ban className="size-3.5" /> Kick
+                    <Ban className="size-3.5" /> {t('players.kick')}
                   </button>
                   <button onClick={() => executeAction(p.name, 'ban')} className="flex items-center justify-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-red-500/20 hover:text-red-500">
-                    <Shield className="size-3.5" /> Ban
+                    <Shield className="size-3.5" /> {t('players.ban')}
                   </button>
                   <button onClick={() => executeAction(p.name, 'op')} className="flex items-center justify-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-primary/20 hover:text-primary">
-                    <Command className="size-3.5" /> OP
+                    <Command className="size-3.5" /> {t('players.op')}
                   </button>
                   <button onClick={() => executeAction(p.name, 'deop')} className="flex items-center justify-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-zinc-500/20 hover:text-zinc-400">
-                    <User className="size-3.5" /> Deop
+                    <User className="size-3.5" /> {t('players.deop')}
                   </button>
                 </div>
               </div>
